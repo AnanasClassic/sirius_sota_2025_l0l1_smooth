@@ -3,7 +3,7 @@ import math
 from torch.optim.optimizer import Optimizer
 
 
-class AGMsDR(Optimizer):
+class AGMsDR_2410_10800(Optimizer):
     def __init__(self, params, L0, L1, stepsize_type='optimal', rel_prec=1e-6, 
                  max_line_search_iters=30, eps=1e-12):
         """
