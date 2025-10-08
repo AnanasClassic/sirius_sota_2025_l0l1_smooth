@@ -242,3 +242,44 @@ class LogSumExp(ExampleFunction):
     @property
     def l0l1_smooth(self):
         return self.L0, self.L1
+    
+class Quadratic(ExampleFunction):
+    """f(x) = 0.5 <x, Ax> - <b, x> + c
+    b = A^-1 x*
+    min f(x) = f(x*)"""
+
+    def __init__(self, n_dim, x_star: torch.Tensor, c: float, scale=1.0, seed=None, asym=None):
+        super().__init__()
+        # det(A@A.t().conj = n_dim! scale ^ n_dim
+        # scale = (torch.sqrt(torch.tensor([6.28 * n_dim])) * (n_dim * torch.exp(torch.tensor([-1]))) ** n_dim) ** (-1/n_dim)
+        # print(scale)
+        if seed is not None:
+            torch.manual_seed(seed)
+        self.A = torch.zeros(n_dim, n_dim)
+        self.A = torch.triu(torch.randn((n_dim, n_dim)))
+        self.A *= scale
+        if asym is not None:
+            self.A[0] *= asym
+        self.A = self.A @ self.A.t().conj()
+        self.b = self.A @ x_star
+        self.c = c
+
+    @property
+    def parameters(self):
+        return [self.A, self.b, self.c]
+
+    @property
+    def f(self):
+        return lambda x: 0.5 * (x @ self.A @ x) - (self.b @ x) + self.c
+
+    @property
+    def grad(self):
+        return lambda x: self.A @ x - self.b
+
+    @property
+    def hess(self):
+        return lambda x: self.A
+
+    @property
+    def l0l1_smooth(self):
+        return self.L0, self.L1
