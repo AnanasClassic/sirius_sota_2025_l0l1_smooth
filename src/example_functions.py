@@ -2,6 +2,7 @@ import torch
 
 class ExampleFunction:
     def __init__(self):
+        self.dtype = torch.float32
         self.L0 = None
         self.L1 = None
 
@@ -28,11 +29,12 @@ class ExampleFunction:
 
 class NormX2N(ExampleFunction):
     """f(x) = 1/n||x||^{2n}"""
-    def __init__(self, n: int, seed=None):
+    def __init__(self, n: int, seed=None, dtype=torch.float32):
         super().__init__()
         if seed is not None:
             torch.manual_seed(seed)
         self.n = n
+        self.dtype = dtype
         self.L0 = 2 * n
         self.L1 = 2 * n - 1
 
@@ -63,11 +65,12 @@ class NormX2N(ExampleFunction):
 
 class ExponentInnerProduct(ExampleFunction):
     """f(x) = exp(a^T x)"""
-    def __init__(self, n_dim: int, scale=1.0, seed=None):
+    def __init__(self, n_dim: int, scale=1.0, seed=None, dtype=torch.float32):
         super().__init__()
         if seed is not None:
             torch.manual_seed(seed)
-        self.a = torch.randn(n_dim) * scale
+        self.dtype = dtype
+        self.a = torch.randn(n_dim, dtype=dtype) * scale
         self.L0 = 0
         self.L1 = torch.norm(self.a, p=2).item()
 
@@ -94,11 +97,12 @@ class ExponentInnerProduct(ExampleFunction):
 
 class LogisticFunction(ExampleFunction):
     """f(x) = log(1 + exp(-a^T x))"""
-    def __init__(self, n_dim: int, scale=1.0, seed=None):
+    def __init__(self, n_dim: int, scale=1.0, seed=None, dtype=torch.float32):
         super().__init__()
         if seed is not None:
             torch.manual_seed(seed)
-        self.a = torch.randn(n_dim) * scale
+        self.dtype = dtype
+        self.a = torch.randn(n_dim, dtype=dtype) * scale
         self.L0 = 0
         self.L1 = torch.norm(self.a, p=2).item()
 
@@ -142,11 +146,12 @@ class SumOfExponents(ExampleFunction):
     Для sum of exponentials:
     L0 = 0, L1 = max_i ||a_i||
     """
-    def __init__(self, n_dim: int, n_terms: int, scale=1.0, seed=None):
+    def __init__(self, n_dim: int, n_terms: int, scale=1.0, seed=None, dtype=torch.float32):
         super().__init__()
         if seed is not None:
             torch.manual_seed(seed)
-        self.A = torch.randn(n_terms, n_dim) * scale
+        self.dtype = dtype
+        self.A = torch.randn(n_terms, n_dim, dtype=dtype) * scale
         # L0 = 0, L1 = max_i ||a_i||
         self.L0 = 0
         self.L1 = torch.norm(self.A, p=2, dim=1).max().item()
@@ -194,11 +199,12 @@ class LogSumExp(ExampleFunction):
     
     Таким образом: L0 = 0, L1 = max_i ||a_i||
     """
-    def __init__(self, n_dim: int, n_terms: int, scale=1.0, seed=None):
+    def __init__(self, n_dim: int, n_terms: int, scale=1.0, seed=None, dtype=torch.float32):
         super().__init__()
         if seed is not None:
             torch.manual_seed(seed)
-        self.A = torch.randn(n_terms, n_dim) * scale
+        self.dtype = dtype
+        self.A = torch.randn(n_terms, n_dim, dtype=dtype) * scale
         self.L0 = 0
         self.L1 = torch.norm(self.A, p=2, dim=1).max().item()
 
@@ -248,15 +254,16 @@ class Quadratic(ExampleFunction):
     b = A^-1 x*
     min f(x) = f(x*)"""
 
-    def __init__(self, n_dim, x_star: torch.Tensor, c: float, scale=1.0, seed=None, asym=None):
+    def __init__(self, n_dim, x_star: torch.Tensor, c: float, scale=1.0, seed=None, asym=None, dtype=torch.float32):
         super().__init__()
         # det(A@A.t().conj = n_dim! scale ^ n_dim
         # scale = (torch.sqrt(torch.tensor([6.28 * n_dim])) * (n_dim * torch.exp(torch.tensor([-1]))) ** n_dim) ** (-1/n_dim)
         # print(scale)
         if seed is not None:
             torch.manual_seed(seed)
-        self.A = torch.zeros(n_dim, n_dim)
-        self.A = torch.triu(torch.randn((n_dim, n_dim)))
+        self.dtype = dtype
+        self.A = torch.zeros(n_dim, n_dim, dtype=dtype)
+        self.A = torch.triu(torch.randn((n_dim, n_dim), dtype=dtype))
         self.A *= scale
         if asym is not None:
             self.A[0] *= asym
